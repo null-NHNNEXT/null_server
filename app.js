@@ -8,10 +8,17 @@ var bodyParser = require('body-parser');
 var mongoose = require('mongoose');
 mongoose.connect("mongodb://localhost/null");
 
+var index = require('./routes/index');
 var api = require('./routes/api');
 var test = require('./routes/test');
+//var auth = require('./routes/auth');
 
 var app = express();
+
+// set port num
+app.listen(8888, function() {
+	console.log('Listening on port 8888');
+});
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -25,8 +32,10 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
+app.use('/', index);
 app.use('/api', api);
 app.use('/test', test);
+//app.use('/auth', auth);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

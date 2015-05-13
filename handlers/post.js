@@ -9,8 +9,13 @@ var BoardPermissionErr = { code : 401, msg : "Does not have Board Permission" },
 exports.findBefore = function(req, res, token) {
 	var getNum = 20;
 
-	var boardId = req.params.boardId;
-	var category = req.params.category;
+	// --------------------------------
+	// Modified by JinWoo Lee (2015.05.13)
+	// --------------------------------
+	var boardId = "12314";
+	// var boardId = req.params.boardId;
+	var category = "all";
+	// var category = req.params.category;
 	var postId = req.params._id;
 
 	checkBoardAvailablity(token, boardId, function(errno) {

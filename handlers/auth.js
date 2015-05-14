@@ -1,8 +1,11 @@
+var mongo = require('mongodb');
+var UserProvider = require('../models/userprovider.js').UserProvider;
+var userProvider = new UserProvider('localhost', 27017);
+
 var jwt = require('jwt-simple');
 
 var _iss = 'NEXT_NULL';
 var _secret = 'mysecret';
-
 
 exports.new = function(req, res, next) {
 	var body = req.body;
@@ -11,9 +14,18 @@ exports.new = function(req, res, next) {
 	var uuid = body.writerId;
 	var boardId = body.boardId;
 	var penname = body.penName;
-	createToken(uuid, boardId, function(token) {
-		console.log(token);
-		res.json({ "error": null, "result": token });
+	userProvider.register( boardId, writerId, penName, function() {
+		if (err) {
+			console.log(err.name + ": " + err.message);
+			res.status(409);
+			res.json({ "code": 409, "msg": err.message });
+			return;
+		}
+
+		createToken(uuid, boardId, function(token) {
+			console.log(token);
+			res.json({ "error": null, "result": token });
+		});
 	});
 //	next();
 };

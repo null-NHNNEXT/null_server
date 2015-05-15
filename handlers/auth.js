@@ -14,11 +14,11 @@ exports.new = function(req, res, next) {
 	var uuid = body.writerId;
 	var boardId = body.boardId;
 	var penname = body.penName;
-	userProvider.register( boardId, writerId, penName, function() {
+	userProvider.register( boardId, uuid, penName, function() {
 		if (err) {
 			console.log(err.name + ": " + err.message);
 			res.status(409);
-			res.json({ "code": 409, "msg": err.message });
+			res.json({ "error": err.message });
 			return;
 		}
 

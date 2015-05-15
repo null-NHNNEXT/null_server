@@ -14,7 +14,7 @@ exports.new = function(req, res, next) {
 	var uuid = body.writerId;
 	var boardId = body.boardId;
 	var penName = body.penName;
-	userProvider.register( boardId, uuid, penName, function() {
+	userProvider.register( boardId, uuid, penName, function(err) {
 		if (err) {
 			console.log(err.name + ": " + err.message);
 			res.status(409);

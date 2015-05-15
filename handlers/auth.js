@@ -13,7 +13,7 @@ exports.new = function(req, res, next) {
 	console.log(body);
 	var uuid = body.writerId;
 	var boardId = body.boardId;
-	var penname = body.penName;
+	var penName = body.penName;
 	userProvider.register( boardId, uuid, penName, function() {
 		if (err) {
 			console.log(err.name + ": " + err.message);

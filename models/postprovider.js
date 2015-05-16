@@ -111,6 +111,11 @@ PostProvider.prototype.save = function(post, callback) {
 			callback(err);
 		} else {
 			post.ts = new Date();
+			delete post.writerId;
+			post.penName = "hihihi";	// TODO: temporary dummy
+			if ( typeof(post.image) == "undefined" ) {
+				post.image = false;
+			}
 			post.comments = [];
 			//post = [post];
 			collection.insert(post, function() {

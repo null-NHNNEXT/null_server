@@ -36,11 +36,10 @@ PostProvider.prototype.getCollection = function(boardId, callback) {
 
 PostProvider.prototype.findBefore = function(boardId, category, postId, num, callback) {
 	if(!postId) {
-		// postId = recent
 		postId = objectIdFromDate(new Date()); 
 	}
 
-//	console.log('findbfr : ' + boardId + ',' + category + ',' + postId + ',' + num + ',' + callback);
+	console.log("PostProvider.findBefore: postId(" + postId + ")");
 	
 	this.getCollection(boardId, function(err, collection) {
 		if (err) {

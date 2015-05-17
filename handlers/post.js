@@ -17,6 +17,7 @@ exports.findBefore = function(req, res, token) {
 	var category = "all";
 	// var category = req.params.category;
 	var postId = req.params._id;
+	console.log("findBefore: postId(" + postId + ")");
 
 	checkBoardAvailablity(token, boardId, function(errno) {
 		if(errno) {

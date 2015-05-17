@@ -61,17 +61,15 @@ function createToken(uuid, boardId, callback) {
 	console.log('creating Token of uuid : ' + uuid);
 	console.log('body:\n' + body.valid);
 	var token = jwt.encode(body, _secret);
-	console.log('token :'+token);
+	console.log('token :' + token);
 
 	callback(token);
 };
 
 
 function parseToken(token, callback) {
-	console.log("parseToken");
 	var decoded = jwt.decode(token, _secret);
-	console.log("parseToken3");
-	console.log(decoded);
+	console.log("token :" + decoded);
 
 	callback(decoded);
 }

@@ -53,7 +53,7 @@ function createToken(uuid, boardId, callback) {
 	var body = {
 		iss: 'NEXT_NULL',
 		uuid: uuid,
-		boards: [12314, boardId],
+		board: boardId,
 		exp: expires,
 		valid: expires % 1000 + uuid.substring(0,6)
 	};
@@ -71,5 +71,6 @@ function parseToken(token, callback) {
 	var decoded = jwt.decode(token, _secret);
 	console.log("token :" + decoded);
 
+	decoded.board = "12314";
 	callback(decoded);
 }

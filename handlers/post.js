@@ -7,13 +7,12 @@ var BoardPermissionErr = { code : 401, msg : "Does not have Board Permission" },
 		PostPermissionErr = { code : 403, msg : "Does not have Post Permission" };
 
 exports.findBefore = function(req, res, token) {
-	var getNum = 20;
+	var getNum = 10;
 
 	// --------------------------------
 	// Modified by JinWoo Lee (2015.05.13)
 	// --------------------------------
-	var boardId = "12314";
-	// var boardId = req.params.boardId;
+	var boardId = token.board;
 	var category = "all";
 	// var category = req.params.category;
 	var postId = req.params._id;
@@ -45,7 +44,7 @@ exports.create = function(req, res, token) {
 	body = typeof body === 'string' ? JSON.parse(body) : body;
 
 	var post = {
-		boardId: req.params.boardId,
+		boardId: token.board,
 		writerId: token.uuid,
 		title: body.title,
 		contents: body.contents,
@@ -78,7 +77,7 @@ exports.create = function(req, res, token) {
 
 exports.read = function(req, res, token) {
 	var _id = req.params._id;
-	var boardId = req.params.boardId;
+	var boardId = token.board;
 	console.log('Retrieving post: ' + _id);
 
 
@@ -102,14 +101,14 @@ exports.read = function(req, res, token) {
 
 exports.update = function(req, res, token) {
 	var _id = req.params._id;
-	var boardId = req.params.boardId;
+	var boardId = token.board;
 	console.log('Updating post: ' + _id);
 
 	var body = req.body;
 	body = typeof body === 'string' ? JSON.parse(body) : body;
 
 	var post = {
-		boardId: body.boardId,
+		boardId: token.board,
 		writerId: token.uuid,
 		title: body.title,
 		contents: body.contents,
@@ -142,7 +141,7 @@ exports.update = function(req, res, token) {
 
 exports.delete = function(req, res, token) {
 	var _id = req.params._id;
-	var boardId = req.params.boardId;
+	var boardId = token.board;
 	console.log('Deleting post: ' + _id);
 
 	checkPostAvailablity(token, boardId, _id, function(errno) {
@@ -164,8 +163,8 @@ exports.delete = function(req, res, token) {
 };
 
 function checkBoardAvailablity(token, boardId, callback) {
-	var availableBoards = token.boards.toString().split(',');
-	if(includes(availableBoards, boardId)) {
+	var availableBoard = token.board;
+	if(availableBoard == boardId) {
 		callback();
 	} else {
 //		var err_p = "Does not have Board Permission";

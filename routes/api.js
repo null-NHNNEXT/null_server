@@ -15,8 +15,12 @@ router.get('/', function(req, res) {
 router.post('/auth/register', auth.new);
 router.post('/auth/addBoard/:boardId', function(req, res) {});
 
-router.get('/list/:boardId/:category/before/:_id', AUTHer(post.findBefore));
+router.get('/list', AUTHer(post.findBefore));
+router.get('/list/before/:_id', AUTHer(post.findBefore));
+
+// Deprecated
 router.get('/list/:boardId/:category', AUTHer(post.findBefore));
+router.get('/list/:boardId/:category/before/:_id', AUTHer(post.findBefore));
 
 router.get('/post/:boardId/:_id', AUTHer(post.read));
 router.post('/post/:boardId', AUTHer(post.create));

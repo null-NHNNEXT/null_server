@@ -18,6 +18,11 @@ router.post('/auth/addBoard/:boardId', function(req, res) {});
 router.get('/list', AUTHer(post.findBefore));
 router.get('/list/before/:_id', AUTHer(post.findBefore));
 
+router.post('/post', AUTHer(post.create));
+router.get('/post/:_id', AUTHer(post.read));
+router.put('/post/:_id', AUTHer(post.update));
+router.delete('/post/:_id', AUTHer(post.delete));
+
 // Deprecated
 router.get('/list/:boardId/:category', AUTHer(post.findBefore));
 router.get('/list/:boardId/:category/before/:_id', AUTHer(post.findBefore));

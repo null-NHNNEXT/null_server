@@ -1,11 +1,11 @@
 'use strict';
 
 var express = require('express');
-var router = express.Router();
-
-// UserProviderTest
+var dbManager = require('../models/DBManager').DBManager;
 var UserProvider = require('../models/userprovider').UserProvider;
-var userProvider = new UserProvider('localhost', 27017);
+
+var router = express.Router();
+var userProvider = new UserProvider(dbManager);
 
 var registerTest = function(req, res, next) {
 	var title = "RegisterTest";

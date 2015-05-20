@@ -1,36 +1,25 @@
 var express = require('express');
-var router = express.Router();
-
 var auth = require('../handlers/auth');
 var post = require('../handlers/post');
 
-var AUTHer = function(callback) {
-	return function(req, res) { auth.parse(req, res, callback); };
-}
+var router = express.Router();
 
 router.get('/', function(req, res) {
 	res.render('index', { title : 'NEXT HDP TEAM NULL APIs' }); 
 });
 
-router.post('/auth/register', auth.new);
-router.post('/auth/addBoard/:boardId', function(req, res) {});
+router.post('/auth/register', auth.register);
 
-router.get('/list', AUTHer(post.findBefore));
-router.get('/list/before/:_id', AUTHer(post.findBefore));
+router.get('/list', auth.next(post.findBefore));
+router.get('/list/before/:_id', auth.next(post.findBefore));
 
-router.post('/post', AUTHer(post.create));
-router.get('/post/:_id', AUTHer(post.read));
-router.put('/post/:_id', AUTHer(post.update));
-router.delete('/post/:_id', AUTHer(post.delete));
+router.post('/post', auth.next(post.create));
+router.get('/post/:_id', auth.next(post.read));
+router.put('/post/:_id', auth.next(post.update));
+router.delete('/post/:_id', auth.next(post.delete));
 
-// Deprecated
-router.get('/list/:boardId/:category', AUTHer(post.findBefore));
-router.get('/list/:boardId/:category/before/:_id', AUTHer(post.findBefore));
-
-router.get('/post/:boardId/:_id', AUTHer(post.read));
-router.post('/post/:boardId', AUTHer(post.create));
-router.put('/post/:boardId/:_id', AUTHer(post.update));
-router.delete('/post/:boardId/:_id', AUTHer(post.delete));
-
+router.post('/post/:_id/comment', auth.next(post.addComment));
+router.delete('/post/:_id/comment/:_commentId', auth.next(post.removeComment));
 
 module.exports = router;
+

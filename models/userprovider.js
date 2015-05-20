@@ -1,20 +1,7 @@
 'use strict';
 
-var Db = require('mongodb').Db;
-var Connection = require ('mongodb').Connection;
-var Server = require ('mongodb').Server;
-var BSON = require ('mongodb').BSON;
-var ObjectID = require ('mongodb').ObjectID;
-
-var UserProvider = function(host, port) {
-	this.db = new Db('null_db', new Server(host, port, {auto_reconnect: true}));
-	this.db.open(function(err) {
-		if (!err) {
-			console.log("app.js : Connected to 'null_db' database");
-		} else {
-			console.log (err);
-		}
-	});
+var UserProvider = function(dbManager) {
+	this.db = dbManager.db;
 }
 
 UserProvider.prototype.getCollection = function(boardId, callback) {

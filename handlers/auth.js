@@ -1,13 +1,16 @@
-var mongo = require('mongodb');
-var UserProvider = require('../models/userprovider.js').UserProvider;
-var userProvider = new UserProvider('localhost', 27017);
+"use strict";
 
+var mongo = require('mongodb');
+var DBManager = require('../models/DBManager').DBManager;
+var UserProvider = require('../models/userprovider.js').UserProvider;
 var jwt = require('jwt-simple');
+
+var userProvider = new UserProvider(DBManager);
 
 var _iss = 'NEXT_NULL';
 var _secret = 'mysecret';
 
-exports.new = function(req, res, next) {
+exports.register = function(req, res) {
 	var body = req.body;
 	body = typeof body === 'string' ? JSON.parse(body) : body;
 	console.log(body);
@@ -17,8 +20,7 @@ exports.new = function(req, res, next) {
 	userProvider.register( boardId, uuid, penName, function(err) {
 		if (err) {
 			console.log(err.name + ": " + err.message);
-			res.status(409);
-			res.json({ "error": err.message });
+			res.status(409).json({ "error": err.message });
 			return;
 		}
 
@@ -27,20 +29,29 @@ exports.new = function(req, res, next) {
 			res.json({ "error": null, "result": token });
 		});
 	});
-//	next();
 };
 
-exports.parse = function(req, res, next) {
-	var token = req.get('Authorization');
-	parseToken(token, function(decoded) {
-		if(checkValid(decoded.uuid, new Date(decoded.exp), decoded.valid)) {
-			next(req, res, decoded);
-		} else {
-			res.send('error');
-		}
-	});
-};
+exports.next = function(handler) {
+	return function(req, res) {
+		var token = req.get('Authorization');
+		parseToken(token, function(decoded) {
+			console.log("token :" + JSON.stringify(decoded));
 
+			if (!decoded.board) {
+				console.log("[parseToken] Error: board name undefined or null");
+				res.status(500).json({ "error" : "Internal Service Error - cannot find board" });
+				return;
+			}
+
+			if (!checkValid(decoded.uuid, new Date(decoded.exp), decoded.valid)) {
+				res.status(401).json({ "error" : "Unauthorized" });
+				return;
+			}
+
+			handler(req, res, decoded);
+		});
+	};
+};
 
 function checkValid(uuid, exp, valid) {
 	return valid == (exp % 1000 + uuid.substring(0,6));
@@ -69,8 +80,5 @@ function createToken(uuid, boardId, callback) {
 
 function parseToken(token, callback) {
 	var decoded = jwt.decode(token, _secret);
-	console.log("token :" + decoded);
-
-	decoded.board = "12314";
 	callback(decoded);
 }

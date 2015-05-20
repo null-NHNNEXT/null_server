@@ -1,7 +1,9 @@
+"use strict";
 var mongo = require('mongodb');
+var DBManager = require('../models/DBManager').DBManager;
 var PostProvider = require('../models/postprovider.js').PostProvider;
 
-var postProvider = new PostProvider('localhost', 27017);
+var postProvider = new PostProvider(DBManager);
 
 var BoardPermissionErr = { code : 401, msg : "Does not have Board Permission" },
 		PostPermissionErr = { code : 403, msg : "Does not have Post Permission" };
@@ -18,20 +20,13 @@ exports.findBefore = function(req, res, token) {
 	var postId = req.params._id;
 	console.log("findBefore: postId(" + postId + ")");
 
-	checkBoardAvailablity(token, boardId, function(errno) {
-		if(errno) {
-			console.log("ERROR : " + errno);
-			handleError(res, errno);
+	postProvider.findBefore(boardId, category, postId, getNum, function(err, result) {
+		if(err) {
+			console.log("ERROR : " + err);
+			res.json({error:err});
 		} else {
-			postProvider.findBefore(boardId, category, postId, getNum, function(err, result) {
-				if(err) {
-					console.log("ERROR : " + err);
-					res.json({error:err});
-				} else {
-		//			console.log('Success: ' + JSON.stringify(result));
-					res.json({error:null, result:result});
-				}
-			});
+//			console.log('Success: ' + JSON.stringify(result));
+			res.json({error:null, result:result});
 		}
 	});
 }
@@ -43,6 +38,11 @@ exports.create = function(req, res, token) {
 	var body = req.body;
 	body = typeof body === 'string' ? JSON.parse(body) : body;
 
+	if (!body.title) {
+		res.status(400).json({ "error" : "Bad Request - no title" });
+		return;
+	}
+
 	var post = {
 		boardId: token.board,
 		writerId: token.uuid,
@@ -51,26 +51,13 @@ exports.create = function(req, res, token) {
 		image: body.image
 	};
 
-	if(post.title == null) {
-		post = null;
-	}
-
-	checkBoardAvailablity(token, post.boardId, function(errno) {
-		if(errno) {
-			console.log("ERROR : " + errno);
-			handleError(res, errno);
-		} else {	
-			if(post) {
-				postProvider.save(post, function(err, result) {
-					if (err) {
-						console.log("ERROR : " + err);
-						res.json({error:err});
-					} else {
-		//				console.log('Success: ' + JSON.stringify(result));
-						res.json({error:null, result:result});
-					}
-				});
-			}
+	postProvider.save(post, function(err, result) {
+		if (err) {
+			console.log("ERROR : " + err);
+			res.json({error:err});
+		} else {
+//			console.log('Success: ' + JSON.stringify(result));
+			res.json({error:null, result:result});
 		}
 	});
 };
@@ -80,21 +67,13 @@ exports.read = function(req, res, token) {
 	var boardId = token.board;
 	console.log('Retrieving post: ' + _id);
 
-
-	checkBoardAvailablity(token, boardId, function(errno) {
-		if(errno) {
-			console.log("ERROR : " + errno);
-			handleError(res, errno);
+	postProvider.findById(boardId, _id, function(err, result) {
+		if (err) {
+			console.log("ERROR : " + err);
+			res.json({error:err});
 		} else {
-			postProvider.findById(boardId, _id, function(err, result) {
-				if (err) {
-					console.log("ERROR : " + err);
-					res.json({error:err});
-				} else {
-					console.log('Success: ' + JSON.stringify(result));
-					res.json({error:null, result:result});
-				}
-			});
+			console.log('Success: ' + JSON.stringify(result));
+			res.json({error:null, result:result});
 		}
 	});
 };
@@ -107,6 +86,11 @@ exports.update = function(req, res, token) {
 	var body = req.body;
 	body = typeof body === 'string' ? JSON.parse(body) : body;
 
+	if (!body.title) {
+		res.status(400).json({ "error" : "Bad Request - no title" });
+		return;
+	}
+
 	var post = {
 		boardId: token.board,
 		writerId: token.uuid,
@@ -115,28 +99,17 @@ exports.update = function(req, res, token) {
 		image: body.image
 	};
 
-	if(post.title == null) {
-		post = null;
-	}
-
-	checkPostAvailablity(token, boardId, _id, function(errno) {
-		if(errno) {
-			console.log("ERROR : " + errno);
-			handleError(res, errno);
-		} else {
-			if(post) {
-				postProvider.save(post, function(err, result) {
-					if (err) {
-						console.log("ERROR : " + err);
-						res.json({error:err});
-					} else {
-						console.log('Success: ' + JSON.stringify(result));
-						res.json({error:null, result:result});
-					}
-				});
+	if(post) {
+		postProvider.save(post, function(err, result) {
+			if (err) {
+				console.log("ERROR : " + err);
+				res.json({error:err});
+			} else {
+				console.log('Success: ' + JSON.stringify(result));
+				res.json({error:null, result:result});
 			}
-		}
-	});
+		});
+	}
 };
 
 exports.delete = function(req, res, token) {
@@ -144,20 +117,50 @@ exports.delete = function(req, res, token) {
 	var boardId = token.board;
 	console.log('Deleting post: ' + _id);
 
-	checkPostAvailablity(token, boardId, _id, function(errno) {
-		if(errno) {
-			console.log("ERROR : " + errno);
-			handleError(res, errno);
+	postProvider.deleteById(boardId, _id, function(err, result) {
+		if (err) {
+			console.log("ERROR : " + err);
+			res.json({error:err});
 		} else {
-			postProvider.deleteById(boardId, _id, function(err, result) {
-				if (err) {
-					console.log("ERROR : " + err);
-					res.json({error:err});
-				} else {
-					console.log('Success: ' + JSON.stringify(result));
-					res.json({error:null, result:result});
-				}
-			});
+			console.log('Success: ' + JSON.stringify(result));
+			res.json({error:null, result:result});
+		}
+	});
+};
+
+exports.addComment = function(req, res, token) {
+	var _id = req.params._id;
+	var boardId = token.board;
+
+	var comment = {
+		writerId : "TestWriterID",
+		penName : "TestPenname",
+		contents : "Test contents"
+	};
+
+	postProvider.addComment(boardId, _id, comment, function(err, result) {
+		if (err) {
+			console.log("ERROR : " + err);
+			res.json({error:err});
+		} else {
+			console.log("Success: " + JSON.stringify(result));
+			res.json({error: null});
+		}
+	});
+};
+
+exports.removeComment = function(req, res, token) {
+	var _id = req.params._id;
+	var _commentId = req.params._commentId;
+	var boardId = token.board;
+
+	postProvider.removeComment(boardId, _id, _commentId, function(err, result) {
+		if (err) {
+			console.log("ERROR : " + err);
+			res.json({error:err});
+		} else {
+			console.log("Success: " + JSON.stringify(result));
+			res.json({error: null});
 		}
 	});
 };

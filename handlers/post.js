@@ -1,115 +1,97 @@
 "use strict";
 var mongo = require('mongodb');
-var DBManager = require('../models/DBManager').DBManager;
+var dbManager = require('../models/DBManager').mainDB;
 var PostProvider = require('../models/postprovider.js').PostProvider;
 
-var postProvider = new PostProvider(DBManager);
+var postProvider = new PostProvider(dbManager);
 
-var BoardPermissionErr = { code : 401, msg : "Does not have Board Permission" },
-		PostPermissionErr = { code : 403, msg : "Does not have Post Permission" };
+function errorHandler(code, error) {
+	console.log("Error: " + error.message);
+	console.log(error.trace);
+	res.status(code).json({ "error": error.message });
+}
 
 exports.findBefore = function(req, res, token) {
 	var getNum = 10;
 
-	// --------------------------------
-	// Modified by JinWoo Lee (2015.05.13)
-	// --------------------------------
 	var boardId = token.board;
-	var category = "all";
-	// var category = req.params.category;
 	var postId = req.params._id;
-	console.log("findBefore: postId(" + postId + ")");
+	console.log("findBefore: boardId(" + boardId + "), postId(" + postId + ")");
 
-	postProvider.findBefore(boardId, category, postId, getNum, function(err, result) {
-		if(err) {
-			console.log("ERROR : " + err);
-			res.json({error:err});
-		} else {
-//			console.log('Success: ' + JSON.stringify(result));
-			res.json({error:null, result:result});
-		}
+	postProvider.findBefore(boardId, postId, getNum, function(error, result) {
+		if (error) return errorHandler(500, error);
+
+		res.json({ "error": null, "result": result });
 	});
 }
 
 
 exports.create = function(req, res, token) {
-	console.log('handler/post.create');
+	console.log("handler/post.create");
 
 	var body = req.body;
 	body = typeof body === 'string' ? JSON.parse(body) : body;
 
-	if (!body.title) {
-		res.status(400).json({ "error" : "Bad Request - no title" });
-		return;
-	}
+	if (! body.title) return errorHandler(400, new Error("Bad Request - no title" ));
 
-	var post = {
-		boardId: token.board,
-		writerId: token.uuid,
-		title: body.title,
-		contents: body.contents,
-		image: body.image
-	};
+	userProvider.findById(token.board, token.uuid, function(error, result) {
+		if (error) return errorHandler(error);
 
-	postProvider.save(post, function(err, result) {
-		if (err) {
-			console.log("ERROR : " + err);
-			res.json({error:err});
-		} else {
-//			console.log('Success: ' + JSON.stringify(result));
-			res.json({error:null, result:result});
-		}
+		var post = {
+			"title" : body.title,
+			"contents" : body.contents,
+			"penName" : result.penName,
+			"image" : body.image || null
+		};
+
+		postProvider.save(token.board, post, function(error, result) {
+			if (error) return errorHandler(error);
+
+			res.json({ "error": null, "result": result });
+		});
 	});
+
 };
 
 exports.read = function(req, res, token) {
 	var _id = req.params._id;
 	var boardId = token.board;
-	console.log('Retrieving post: ' + _id);
+	console.log("handler/post.read : id(" + _id + ")");
 
-	postProvider.findById(boardId, _id, function(err, result) {
-		if (err) {
-			console.log("ERROR : " + err);
-			res.json({error:err});
-		} else {
-			console.log('Success: ' + JSON.stringify(result));
-			res.json({error:null, result:result});
-		}
+	postProvider.findById(boardId, _id, function(error, result) {
+		if (error) return errorHandler(error);
+
+		res.json({ "error": null, "result": result });
 	});
 };
 
 exports.update = function(req, res, token) {
 	var _id = req.params._id;
 	var boardId = token.board;
-	console.log('Updating post: ' + _id);
+	console.log("handler/post.update : id(" + _id + ")");
 
 	var body = req.body;
 	body = typeof body === 'string' ? JSON.parse(body) : body;
 
-	if (!body.title) {
-		res.status(400).json({ "error" : "Bad Request - no title" });
-		return;
-	}
+	if (! body.title) return errorHandler(400, new Error("Bad Request - no title" ));
 
-	var post = {
-		boardId: token.board,
-		writerId: token.uuid,
-		title: body.title,
-		contents: body.contents,
-		image: body.image
-	};
+	userProvider.findById(token.board, token.uuid, function(error, result) {
+		if (error) return errorHandler(error);
 
-	if(post) {
-		postProvider.save(post, function(err, result) {
-			if (err) {
-				console.log("ERROR : " + err);
-				res.json({error:err});
-			} else {
-				console.log('Success: ' + JSON.stringify(result));
-				res.json({error:null, result:result});
-			}
+		var post = {
+			"_id" : _id,
+			"title" : body.title,
+			"contents" : body.contents,
+			"penName" : result.penName,
+			"image" : body.image || null
+		};
+
+		postProvider.save(token.board, post, function(error, result) {
+			if (error) return errorHandler(error);
+
+			res.json({ "error": null, "result": result });
 		});
-	}
+	});
 };
 
 exports.delete = function(req, res, token) {
@@ -118,13 +100,9 @@ exports.delete = function(req, res, token) {
 	console.log('Deleting post: ' + _id);
 
 	postProvider.deleteById(boardId, _id, function(err, result) {
-		if (err) {
-			console.log("ERROR : " + err);
-			res.json({error:err});
-		} else {
-			console.log('Success: ' + JSON.stringify(result));
-			res.json({error:null, result:result});
-		}
+		if (error) return errorHandler(error);
+
+		res.json({ "error": null, "result": result });
 	});
 };
 
@@ -139,13 +117,9 @@ exports.addComment = function(req, res, token) {
 	};
 
 	postProvider.addComment(boardId, _id, comment, function(err, result) {
-		if (err) {
-			console.log("ERROR : " + err);
-			res.json({error:err});
-		} else {
-			console.log("Success: " + JSON.stringify(result));
-			res.json({error: null});
-		}
+		if (error) return errorHandler(error);
+
+		res.json({ "error": null, "result": result });
 	});
 };
 
@@ -155,64 +129,9 @@ exports.removeComment = function(req, res, token) {
 	var boardId = token.board;
 
 	postProvider.removeComment(boardId, _id, _commentId, function(err, result) {
-		if (err) {
-			console.log("ERROR : " + err);
-			res.json({error:err});
-		} else {
-			console.log("Success: " + JSON.stringify(result));
-			res.json({error: null});
-		}
+		if (error) return errorHandler(error);
+
+		res.json({ "error": null, "result": result });
 	});
 };
 
-function checkBoardAvailablity(token, boardId, callback) {
-	var availableBoard = token.board;
-	if(availableBoard == boardId) {
-		callback();
-	} else {
-//		var err_p = "Does not have Board Permission";
-		var err_p = 401;
-		callback(err_p);
-	}
-}
-
-function checkPostAvailablity(token, boardId, postId, callback) {
-	checkBoardAvailablity(token, boardId, function(err) {
-		if (err) {
-			console.log("PERROR : " + err);
-			callback(BoardPermissionErr);
-		} else {
-			postProvider.findById(boardId, postId, function(err, result) {
-				if (err) {
-					console.log("DBERROR : " + err);
-					callback(err);
-				} else {
-					console.log('Success: ' + JSON.stringify(result.writerId));
-					console.log('tokenId: ' + token.uuid);
-					if(token.uuid == result.writerId) {
-						callback();
-					} else {
-//						var err_p = "Does not have Post Permission";
-						callback(PostPermissionErr);
-					}
-				}
-			});
-		}
-	});
-}
-
-function handleError(res, err) {
-	res.status(err.code);
-	res.json(err);
-//	res.send(err.code + " : " + err.msg);
-}
-
-
-function includes(array, target) {
-	for(var i = 0; i < array.length; i++) {
-		if(array[i] == target) {
-			return true;
-		}
-	}
-	return false;
-}

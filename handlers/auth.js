@@ -1,14 +1,20 @@
 "use strict";
 
 var mongo = require('mongodb');
-var DBManager = require('../models/DBManager').DBManager;
+var dbManager = require('../models/DBManager').mainDB;
 var UserProvider = require('../models/userprovider.js').UserProvider;
 var jwt = require('jwt-simple');
 
-var userProvider = new UserProvider(DBManager);
+var userProvider = new UserProvider(dbManager);
 
 var _iss = 'NEXT_NULL';
 var _secret = 'mysecret';
+
+function errorHandler(code, error) {
+	console.log("Error: " + error.message);
+	console.log(error.trace);
+	res.status(code).json({ "error": error.message });
+}
 
 exports.register = function(req, res) {
 	var body = req.body;
@@ -17,12 +23,8 @@ exports.register = function(req, res) {
 	var uuid = body.writerId;
 	var boardId = body.boardId;
 	var penName = body.penName;
-	userProvider.register( boardId, uuid, penName, function(err) {
-		if (err) {
-			console.log(err.name + ": " + err.message);
-			res.status(409).json({ "error": err.message });
-			return;
-		}
+	userProvider.register( boardId, uuid, penName, function(error) {
+		if (error) return errorHandler(409, error);
 
 		createToken(uuid, boardId, function(token) {
 			console.log(token);
@@ -37,16 +39,11 @@ exports.next = function(handler) {
 		parseToken(token, function(decoded) {
 			console.log("token :" + JSON.stringify(decoded));
 
-			if (!decoded.board) {
-				console.log("[parseToken] Error: board name undefined or null");
-				res.status(500).json({ "error" : "Internal Service Error - cannot find board" });
-				return;
-			}
+			if (!decoded.board)
+				return errorHandler(500, new Error("Internal Service Error - cannot find board"));
 
-			if (!checkValid(decoded.uuid, new Date(decoded.exp), decoded.valid)) {
-				res.status(401).json({ "error" : "Unauthorized" });
-				return;
-			}
+			if (!checkValid(decoded.uuid, new Date(decoded.exp), decoded.valid))
+				return errorHandler(401, new Error(Unauthorized));
 
 			handler(req, res, decoded);
 		});
@@ -56,7 +53,6 @@ exports.next = function(handler) {
 function checkValid(uuid, exp, valid) {
 	return valid == (exp % 1000 + uuid.substring(0,6));
 }
-
 
 function createToken(uuid, boardId, callback) {
 	var expires = new Date();
@@ -82,3 +78,4 @@ function parseToken(token, callback) {
 	var decoded = jwt.decode(token, _secret);
 	callback(decoded);
 }
+

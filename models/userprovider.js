@@ -1,59 +1,70 @@
-'use strict';
+"use strict";
 
 var UserProvider = function(dbManager) {
-	this.db = dbManager.db;
+	this.dbManager = dbManager;
 }
 
-UserProvider.prototype.getCollection = function(boardId, callback) {
-	this.db.collection('user' + boardId, function(err, collection) {
-		if (err) {
-			callback(err);
-		} else {
-			callback(null, collection);
-		}	
+// --------------------------------
+// Register user or modify pen name
+//
+// Params :
+//	user {
+//		"boardId" : "board id",
+//		"writerId" : "writer id",
+//		"penName" : "new penName, should be unique penName"
+//	}
+//
+//	callback.error = new Error("error message") or null;
+// --------------------------------
+UserProvider.prototype.register = function(user, callback) {
+	if (! user.boardId) return callback(new Error("boardId not specified"));
+	if (! user.writerId) return callback(new Error("writerId not specified"));
+	if (! user.penName) return callback(new Error("penName not specified"));
+
+	this.dbManager.getCollection("users"+user.boardId, function(error, collection) {
+		if (error) return callback(error);
+
+		collection.findOne({
+			"penName" : user.penName
+		}, function(error, result) {
+			//console.log("[DEBUG] result " + JSON.stringify(result));
+			if (error) return callback(error);
+			if ( result && result._id != user.writerId )
+				return callback(new Error("duplicated penName"));
+
+			collection.update(
+				{ "_id" : user.writerId },
+				{ "_id" : user.writerId, "penName" : user.penName },
+				{ "upsert" : true },
+				function(error, result) { callback(error, result); }
+			);
+		});
 	});
 };
 
-UserProvider.prototype.register = function(boardId, writerId, penName, callback) {
-	if (!writerId) {
-		callback(new Error('writerId not spicified'));
-		return;
-	}
+// --------------------------------
+// Find user
+//
+// Params :
+//	boardId = "board id",
+//	writerId = "writer id"
+//
+//	callback.error = new Error("error message") or null;
+//	callback.result = {
+//		"_id" : "writer id",
+//		"penName" : "pen name"
+//	}
+// --------------------------------
+UserProvider.prototype.findById = function(boardId, writerId, callback) {
+	if (! boardId) return callback(new Error("boardId not specified"));
+	if (! writerId) return callback(new Error("writerId not specified"));
 
-	if (!boardId) {
-		callback(new Error('boardId not spicified'));
-		return;
-	}
-
-	if (!penName) {
-		callback(new Error('penName not spicified'));
-		return;
-	}
-
-	this.getCollection(boardId, function(err, collection) {
-		if (err) {
-			callback(err);
-			return;
-		}
-
+	this.dbManager.getCollection("users"+boardId, function(error, collection) {
+		if (error) return callback(error);
+		
 		collection.findOne({
-			"penName" : penName
-		}, function(err, result) {
-			if ( err ) {
-				callback(err);
-			} else if ( result && result._id != writerId ) {
-				callback(new Error('duplicated penName'));
-			} else {
-				collection.update({
-					_id: writerId
-				}, {
-					_id : writerId,
-					"penName" : penName
-				}, { "upsert" : true }, function() {
-					callback(null);
-				});
-			}
-		});
+			"_id" : writerId
+		}, function(error, result) { callback(error, result); });
 	});
 };
 

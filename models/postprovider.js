@@ -10,101 +10,94 @@ var dateFromObjectId = function(objectId) {
 };
 
 var PostProvider = function(dbManager) {
-	this.db = dbManager.db;
+	this.dbManager = dbManager;
 }
+ 
+// --------------------------------
+// Save new article, or update article
+//
+// Params :
+//	post {
+//		"_id" : "null/undefined(new post) or post id",
+//		"title" : "title",
+//		"contents" : "contents"
+//	}
+//
+//	callback.error = new Error("error message") or null
+// --------------------------------
+PostProvider.prototype.save = function(boardId, post, callback) {
+	if (! post) return callback(new Error("post is null"));
 
-PostProvider.prototype.getCollection = function(boardId, callback) {
-	this.db.collection('posts'+boardId, function(err, collection) {
-		if (err) {
-			callback(err);
-		} else {
-			callback(null, collection);
-		}	
+	this.dbManager.getCollection("posts"+boardId, function(error, collection) {
+		if (error) return callback(error);
+
+		post._id = new ObjectID(post._id || null);
+		post.ts = new Date();
+		post.comments = [];
+		collection.update(
+			{ "_id" : post._id },
+			post,
+			{ "upsert" : true },
+			function(error, result) { callback(error, result); }
+		);
 	});
 };
 
-
-PostProvider.prototype.findBefore = function(boardId, category, postId, num, callback) {
-	if(!postId) {
-		postId = objectIdFromDate(new Date()); 
-	}
-
-	console.log("PostProvider.findBefore: postId(" + postId + ")");
-	
-	this.getCollection(boardId, function(err, collection) {
-		if (err) {
-			callback(err);
-			return;
-		}
+// --------------------------------
+// Find recent articles, or articles before specific article ID.
+//
+// Params :
+//	boardId = "board id";
+//	postId = "null(recent articles) or specific article ID""
+//
+//	callback.error = new Error("error message") or null
+//	callback.results = [
+//		(post data),
+//		(post data),
+//		(post data)
+//	]
+// --------------------------------
+PostProvider.prototype.findBefore = function(boardId, postId, num, callback) {
+	this.dbManager.getCollection("posts"+boardId, function(error, collection) {
+		if (error) return callback(error);
 
 		collection.find({
 			_id : { $lt : new ObjectID(postId) }
-		}).sort({ $natural: -1 }).limit(num).toArray(function(err, results) {
-			if (err) {
-				callback(err);
-			} else {
-				callback(null, results);
-			}
+		}).sort({ $natural: -1 }).limit(num).toArray(function(error, results) {
+			callback(error, results);
 		});
 	});
 };
 
 PostProvider.prototype.findById = function(boardId, postId, callback) {
-	this.getCollection(boardId, function(err, collection) {
-		if(err) {
-			callback(err);
-			return;
-		}
+	this.dbManager.getCollection("posts"+boardId, function(error, collection) {
+		if (error) return callback(error);
 
 		collection.findOne({
 			_id : ObjectID.createFromHexString(postId)
-		}, function(err, result) {
-			if(err) {
-				callback (err);
-			} else {
-				callback(null, result);
-			}
-		});
+		}, function(error, result) { callback(error, result); });
 	});
 };
 
 PostProvider.prototype.deleteById = function(boardId, postId, callback) {
-	this.getCollection(boardId, function(err, collection) {
-		if(err) {
-			callback(err);
-			return;
-		}
+	this.dbManager.getCollection("posts"+boardId, function(error, collection) {
+		if (error) return callback(error);
 
 		collection.remove({
 			_id : ObjectID.createFromHexString(postId)
-		}, function(err, result) {
-			if(err) {
-				callback (err);
-			}	else {
-				callback(null, result);
-			}
-		});
+		}, function(error, result) { callback(error, result); });
 	});
 };
 
 PostProvider.prototype.addComment = function(boardId, postId, comment, callback) {
-	this.getCollection(boardId, function(err, collection) {
-		if (err) {
-			callback (err);
-			return;
-		}
+	this.dbManager.getCollection("posts"+boardId, function(error, collection) {
+		if (error) return callback(error);
 
 		collection.update({
 			_id : ObjectID.createFromHexString(postId)
 		}, {
 			"$push" : { comments : comment }
-		}, function (err, post) {
-			if(error) {
-				callback(error);
-			} else {
-				callback(null , post);
-			}
-		});
+		}, function (error, post) { callback(error, result); });
 	});
 };
 
@@ -112,27 +105,6 @@ PostProvider.prototype.removeComment = function(boardId, postId, comment, callba
 	// TODO: not implemented yet
 	callback(null);
 };
- 
-PostProvider.prototype.save = function(post, callback) {
-  this.getCollection(post.boardId, function(err, collection) {
-    if(err) {
-			callback(err);
-		} else {
-			post.ts = new Date();
-			delete post.writerId;
-			post.penName = "hihihi";	// TODO: temporary dummy
-			if ( typeof(post.image) == "undefined" ) {
-				post.image = false;
-			}
-			post.comments = [];
-			//post = [post];
-			collection.insert(post, function() {
-				callback(null, post);
-      });
-    }
-  });
-};
-
 
 
 exports.PostProvider = PostProvider;

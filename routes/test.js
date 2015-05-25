@@ -1,11 +1,17 @@
 'use strict';
 
 var express = require('express');
-var dbManager = require('../models/DBManager').DBManager;
+var dbManager = require('../models/DBManager').testDB;
 var UserProvider = require('../models/userprovider').UserProvider;
 
 var router = express.Router();
 var userProvider = new UserProvider(dbManager);
+
+var resetDB = function(next) {
+	dbManager.db.dropDatabase(function(err, result) {
+		next(err, result);
+	});
+};
 
 var registerTest = function(req, res, next) {
 	var title = "RegisterTest";

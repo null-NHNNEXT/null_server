@@ -1,5 +1,7 @@
 "use strict";
+
 var mongo = require('mongodb');
+var amqp = require('amqplib');
 var dbManager = require('../models/DBManager').mainDB;
 var UserProvider = require('../models/userprovider.js').UserProvider;
 var PostProvider = require('../models/postprovider.js').PostProvider;
@@ -11,6 +13,19 @@ function errorHandler(res, code, error) {
 	console.log("Error: " + error.message);
 	console.log(error.trace);
 	res.status(code).json({ "error": error.message });
+}
+
+var amqpCh;
+function amqpChannel(next) {
+	if (amqpCh)
+		return next(null, amqpCh);
+
+	amqp.connect('amqp://localhost').then(function(conn) {
+		conn.createChannel().then(function(ch) {
+			amqpCh = ch;
+			next(null, ch);
+		});
+	});
 }
 
 exports.findBefore = function(req, res, token) {
@@ -50,6 +65,21 @@ exports.create = function(req, res, token) {
 			if (error) return errorHandler(res, error);
 
 			res.json({ "error": null, "result": result });
+
+			console.log("Post saved : " + JSON.stringify(result));
+			// Now send notification to rabbitMQ
+			amqpChannel(function(error, ch) {
+				var q = "post";
+				var message = JSON.stringify({
+					"boardId" : token.board,
+					"writerId" : token.writerId,
+					"postid" : result._id
+				});
+
+				ch.assertQueue(q, {durable: false}).then(function(_qok) {
+					ch.sendToQueue(q, new Buffer(message));
+				});
+			});
 		});
 	});
 

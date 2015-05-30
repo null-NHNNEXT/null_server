@@ -56,7 +56,7 @@ describe("Post", function() {
 			var updatedPost = {
 				"_id" : id,	// saved id from previous test
 				"title" : "New test title",
-				"contetns" : "New test Contents",
+				"contents" : "New test Contents",
 				"penName" : "New PenName"
 			};
 

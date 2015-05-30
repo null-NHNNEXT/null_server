@@ -10,9 +10,8 @@ var userProvider = new UserProvider(dbManager);
 var _iss = 'NEXT_NULL';
 var _secret = 'mysecret';
 
-function errorHandler(code, error) {
+function errorHandler(res, code, error) {
 	console.log("Error: " + error.message);
-	console.log(error.trace);
 	res.status(code).json({ "error": error.message });
 }
 
@@ -23,8 +22,12 @@ exports.register = function(req, res) {
 	var uuid = body.writerId;
 	var boardId = body.boardId;
 	var penName = body.penName;
-	userProvider.register( boardId, uuid, penName, function(error) {
-		if (error) return errorHandler(409, error);
+	userProvider.register( {
+		"boardId" : boardId,
+		"writerId" : uuid,
+		"penName" : penName
+	}, function(error) {
+		if (error) return errorHandler(res, 409, error);
 
 		createToken(uuid, boardId, function(token) {
 			console.log(token);
@@ -40,10 +43,10 @@ exports.next = function(handler) {
 			console.log("token :" + JSON.stringify(decoded));
 
 			if (!decoded.board)
-				return errorHandler(500, new Error("Internal Service Error - cannot find board"));
+				return errorHandler(res, 500, new Error("Internal Service Error - cannot find board"));
 
 			if (!checkValid(decoded.uuid, new Date(decoded.exp), decoded.valid))
-				return errorHandler(401, new Error(Unauthorized));
+				return errorHandler(res, 401, new Error(Unauthorized));
 
 			handler(req, res, decoded);
 		});

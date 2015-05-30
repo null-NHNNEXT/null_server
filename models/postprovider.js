@@ -97,7 +97,7 @@ PostProvider.prototype.addComment = function(boardId, postId, comment, callback)
 			_id : ObjectID.createFromHexString(postId)
 		}, {
 			"$push" : { comments : comment }
-		}, function (error, post) { callback(error, result); });
+		}, function (error, result) { callback(error, result); });
 	});
 };
 

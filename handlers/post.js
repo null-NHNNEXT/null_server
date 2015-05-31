@@ -72,8 +72,8 @@ exports.create = function(req, res, token) {
 				var q = "post";
 				var message = JSON.stringify({
 					"boardId" : token.board,
-					"writerId" : token.writerId,
-					"postid" : result._id
+					"writerId" : token.uuid,
+					"title" : post.title
 				});
 
 				ch.assertQueue(q, {durable: false}).then(function(_qok) {
@@ -119,7 +119,7 @@ exports.update = function(req, res, token) {
 		};
 
 		postProvider.save(token.board, post, function(error, result) {
-			if (error) return errorHandler(res, error);
+			if (error) return errorHandler(res, 500, error);
 
 			res.json({ "error": null, "result": result });
 		});
@@ -132,7 +132,7 @@ exports.delete = function(req, res, token) {
 	console.log('Deleting post: ' + _id);
 
 	postProvider.deleteById(boardId, _id, function(error, result) {
-		if (error) return errorHandler(res, error);
+		if (error) return errorHandler(res, 500, error);
 
 		res.json({ "error": null, "result": result });
 	});
@@ -146,7 +146,7 @@ exports.addComment = function(req, res, token) {
 	body = typeof body === 'string' ? JSON.parse(body) : body;
 
 	userProvider.findById(token.board, token.uuid, function(error, result) {
-		if (error) return errorHandler(res, error);
+		if (error) return errorHandler(res, 500, error);
 
 		var comment = {
 			"contents" : body.contents,
@@ -154,7 +154,7 @@ exports.addComment = function(req, res, token) {
 		};
 
 		postProvider.addComment(boardId, _id, comment, function(error, result) {
-			if (error) return errorHandler(res, error);
+			if (error) return errorHandler(res, 500, error);
 
 			res.json({ "error": null, "result": result });
 		});
@@ -167,7 +167,7 @@ exports.removeComment = function(req, res, token) {
 	var boardId = token.board;
 
 	postProvider.removeComment(boardId, _id, _commentId, function(error, result) {
-		if (error) return errorHandler(res, error);
+		if (error) return errorHandler(res, 500, error);
 
 		res.json({ "error": null, "result": result });
 	});

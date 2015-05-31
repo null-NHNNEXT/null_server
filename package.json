@@ -16,6 +16,7 @@
     "mocha": "^2.2.5",
     "mongodb": "^2.0.31",
     "morgan": "~1.5.1",
+    "mqtt": "^1.2.0",
     "serve-favicon": "~2.2.0"
   }
 }

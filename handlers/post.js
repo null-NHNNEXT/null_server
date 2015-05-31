@@ -52,7 +52,8 @@ exports.create = function(req, res, token) {
 	if (! body.title) return errorHandler(res, 400, new Error("Bad Request - no title" ));
 
 	userProvider.findById(token.board, token.uuid, function(error, result) {
-		if (error) return errorHandler(res, error);
+		if (error) return errorHandler(res, 500, error);
+		if (! result) return errorHandler(res, 400, new Error("Invalid writerId"));
 
 		var post = {
 			"title" : body.title,
@@ -62,7 +63,7 @@ exports.create = function(req, res, token) {
 		};
 
 		postProvider.save(token.board, post, function(error, result) {
-			if (error) return errorHandler(res, error);
+			if (error) return errorHandler(res, 500, error);
 
 			res.json({ "error": null, "result": result });
 
@@ -91,7 +92,7 @@ exports.read = function(req, res, token) {
 	console.log("handler/post.read : id(" + _id + ")");
 
 	postProvider.findById(boardId, _id, function(error, result) {
-		if (error) return errorHandler(res, error);
+		if (error) return errorHandler(res, 500, error);
 
 		res.json({ "error": null, "result": result });
 	});
@@ -108,7 +109,7 @@ exports.update = function(req, res, token) {
 	if (! body.title) return errorHandler(res, 400, new Error("Bad Request - no title" ));
 
 	userProvider.findById(token.board, token.uuid, function(error, result) {
-		if (error) return errorHandler(res, error);
+		if (error) return errorHandler(res, 500, error);
 
 		var post = {
 			"_id" : _id,

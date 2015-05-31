@@ -93,6 +93,7 @@ PostProvider.prototype.addComment = function(boardId, postId, comment, callback)
 	this.dbManager.getCollection("posts"+boardId, function(error, collection) {
 		if (error) return callback(error);
 
+		comment._id = new ObjectID();
 		collection.update({
 			_id : ObjectID.createFromHexString(postId)
 		}, {
@@ -101,10 +102,19 @@ PostProvider.prototype.addComment = function(boardId, postId, comment, callback)
 	});
 };
 
-PostProvider.prototype.removeComment = function(boardId, postId, comment, callback) {
-	// TODO: not implemented yet
-	callback(null);
+PostProvider.prototype.removeComment = function(boardId, postId, commentId, callback) {
+	callback(null, { "message" : "Not implemented yet" });
+//	this.dbManager.getCollection("posts"+boardId, function(error, collection) {
+//		if (error) return callback(error);
+//
+//		var comment = { "_id" : ObjectID.createFromHexStrig(commentId) };
+//
+//		collection.update({
+//			_id : ObjectID.createFromHexString(postId)
+//		}, {
+//			"$pull" : { comments : comment }
+//		}, function (error, result) { callback(error, result); });
+//	});
 };
-
 
 exports.PostProvider = PostProvider;

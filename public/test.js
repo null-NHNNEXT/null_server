@@ -19,7 +19,7 @@ test( '[POST] /api/auth/register', function( assert ) {
 		"penName" : "JinWoo"
 	};
 
-	$.when( function() {
+	$.when().then( function() {
 		return $.ajax({
 			url : '/api/auth/register',
 			type : 'POST',
@@ -51,14 +51,14 @@ test( '[POST] /api/auth/register', function( assert ) {
 		});
 	}).fail(function(data) {
 		console.log('auth/register : ' + JSON.stringify(data));
-		assert.notEqual( data.error, null, 'error should not be null' );
+		assert.notEqual( data.error, null, 'request should fail' );
 
 		done();
 	});
 });
 
 test( '[POST] /api/post', function( assert ) {
-	assert.expect(2);
+	assert.expect(3);
 	var done = assert.async();
 	var postData = {
 		"title" : "Test title",
@@ -66,7 +66,7 @@ test( '[POST] /api/post', function( assert ) {
 		"image" : null
 	};
 
-	$.when( function() {
+	$.when().then( function() {
 		return $.ajax({
 			url : '/api/post',
 			headers : { "Authorization" : authKey },
@@ -79,6 +79,16 @@ test( '[POST] /api/post', function( assert ) {
 		console.log('auth/post : ' + JSON.stringify(data));
 		assert.equal( data.error, null, 'error should be null' );
 		assert.notEqual( data.result._id, null, '_id should not be null' );
+
+		return $.ajax({
+			url : '/api/post/' + data.result._id,
+			headers : { "Authorization" : authKey },
+			type : 'DELETE'
+		});
+	}).then(function(data) {
+		console.log('auth/post : ' + JSON.stringify(data));
+		assert.equal( data.error, null, 'error should be null' );
+
 		done();
 	});
 });
@@ -96,6 +106,53 @@ test( '[GET] /api/list', function( assert ) {
 		console.log('auth/post : ' + JSON.stringify(data));
 		assert.equal( data.error, null, 'error should be null' );
 		assert.notEqual( data.result.length, 0, 'should return any post' );
+		done();
+	});
+});
+
+test( '[POST] /api/post/comment', function( assert ) {
+	assert.expect(4);
+	var done = assert.async();
+	var postId = "556b0218e8b4796d061884e9";
+	var commentId = {};
+	var commentData = { "contents" : "Test Comment #1" };
+
+	$.when().then( function() {
+		return $.ajax({
+			url : "/api/post/" + postId + "/comment",
+			headers : { "Authorization" : authKey },
+			type : 'POST',
+			contentType : 'application/json; charset=utf-8',
+			data : JSON.stringify(commentData),
+			datatype : 'json'
+		});
+	}).then(function(data) {
+		console.log('auth/post/comment : ' + JSON.stringify(data));
+		assert.equal( data.error, null, 'error should be null' );
+
+		return $.ajax({
+			url : '/api/list',
+			headers : { "Authorization" : authKey },
+			type : 'GET'
+		});
+	}).then(function(data) {
+		console.log('auth/register : ' + JSON.stringify(data));
+		assert.equal( data.error, null, 'error should be null' );
+		data.result.forEach(function(post) {
+			if (post._id == postId) {
+				assert.notEqual(post.comments.length, 0, "have least one comment");
+			}
+		});
+
+		return $.ajax({
+			url : "/api/post/" + postId + "/comment/" + commentId,
+			headers : { "Authorization" : authKey },
+			type : 'DELETE'
+		});
+	}).then(function(data) {
+		console.log('auth/register : ' + JSON.stringify(data));
+		assert.equal( data.error, null, 'error should be null' );
+
 		done();
 	});
 });

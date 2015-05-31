@@ -19,7 +19,7 @@ router.put('/post/:_id', auth.next(post.update));
 router.delete('/post/:_id', auth.next(post.delete));
 
 router.post('/post/:_id/comment', auth.next(post.addComment));
-router.delete('/post/:_id/comment/:_commentId', auth.next(post.removeComment));
+router.delete('/post/:_id/comment/:_cid', auth.next(post.removeComment));
 
 module.exports = router;
 

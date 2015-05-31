@@ -11,7 +11,6 @@ var postProvider = new PostProvider(dbManager);
 
 function errorHandler(res, code, error) {
 	console.log("Error: " + error.message);
-	console.log(error.trace);
 	res.status(code).json({ "error": error.message });
 }
 
@@ -164,9 +163,13 @@ exports.addComment = function(req, res, token) {
 
 exports.removeComment = function(req, res, token) {
 	var _id = req.params._id;
-	var _commentId = req.params._commentId;
+	var _commentId = req.params._cid;
 	var boardId = token.board;
 
+	console.log(req.params);
+	console.log("boardId (" + boardId + ")");
+	console.log("id (" + _id + ")");
+	console.log("commentId (" + _commentId + ")");
 	postProvider.removeComment(boardId, _id, _commentId, function(error, result) {
 		if (error) return errorHandler(res, 500, error);
 

@@ -65,7 +65,7 @@ exports.create = function(req, res, token) {
 		postProvider.save(token.board, post, function(error, result) {
 			if (error) return errorHandler(res, 500, error);
 
-			res.json({ "error": null, "result": result });
+			res.json({ "error": null, "result": post });
 
 			console.log("Post saved : " + JSON.stringify(result));
 			// Now send notification to rabbitMQ
@@ -122,7 +122,7 @@ exports.update = function(req, res, token) {
 		postProvider.save(token.board, post, function(error, result) {
 			if (error) return errorHandler(res, 500, error);
 
-			res.json({ "error": null, "result": result });
+			res.json({ "error": null, "result": post });
 		});
 	});
 };

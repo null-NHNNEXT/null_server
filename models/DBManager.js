@@ -38,5 +38,6 @@ DBManager.prototype.getCollection = function(name, callback) {
 };
 
 exports.mainDB = new DBManager("null_db", "localhost", 27017);
+exports.readDB = new DBManager("null_db", "localhost", 27018);
 exports.testDB = new DBManager("test_db", "localhost", 27017);
 

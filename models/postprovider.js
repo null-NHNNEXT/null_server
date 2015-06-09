@@ -9,8 +9,9 @@ var dateFromObjectId = function(objectId) {
 	return new Date(parseInt(objectId.substring(0, 8), 16) * 1000);
 };
 
-var PostProvider = function(dbManager) {
+var PostProvider = function(dbManager, readDb) {
 	this.dbManager = dbManager;
+	this.readDb = readDb || dbManager;
 }
  
 // --------------------------------
@@ -58,7 +59,7 @@ PostProvider.prototype.save = function(boardId, post, callback) {
 //	]
 // --------------------------------
 PostProvider.prototype.findBefore = function(boardId, postId, num, callback) {
-	this.dbManager.getCollection("posts"+boardId, function(error, collection) {
+	this.readDb.getCollection("posts"+boardId, function(error, collection) {
 		if (error) return callback(error);
 
 		collection.find({
@@ -70,7 +71,7 @@ PostProvider.prototype.findBefore = function(boardId, postId, num, callback) {
 };
 
 PostProvider.prototype.findById = function(boardId, postId, callback) {
-	this.dbManager.getCollection("posts"+boardId, function(error, collection) {
+	this.readDb.getCollection("posts"+boardId, function(error, collection) {
 		if (error) return callback(error);
 
 		collection.findOne({

@@ -111,7 +111,7 @@ test( '[GET] /api/list', function( assert ) {
 });
 
 test( '[POST] /api/post/comment', function( assert ) {
-	assert.expect(4);
+	assert.expect(3);
 	var done = assert.async();
 	var postId = "556b0218e8b4796d061884e9";
 	var commentId = {};
@@ -138,11 +138,6 @@ test( '[POST] /api/post/comment', function( assert ) {
 	}).then(function(data) {
 		console.log('auth/register : ' + JSON.stringify(data));
 		assert.equal( data.error, null, 'error should be null' );
-		data.result.forEach(function(post) {
-			if (post._id == postId) {
-				assert.notEqual(post.comments.length, 0, "have least one comment");
-			}
-		});
 
 		return $.ajax({
 			url : "/api/post/" + postId + "/comment/" + commentId,

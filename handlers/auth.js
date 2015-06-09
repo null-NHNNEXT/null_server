@@ -2,10 +2,11 @@
 
 var mongo = require('mongodb');
 var dbManager = require('../models/DBManager').mainDB;
+var readDb = require('../models/DBManager').readDB;
 var UserProvider = require('../models/userprovider.js').UserProvider;
 var jwt = require('jwt-simple');
 
-var userProvider = new UserProvider(dbManager);
+var userProvider = new UserProvider(dbManager, readDb);
 
 var _iss = 'NEXT_NULL';
 var _secret = 'mysecret';
@@ -60,18 +61,18 @@ function checkValid(uuid, exp, valid) {
 function createToken(uuid, boardId, callback) {
 	var expires = new Date();
 	expires.setDate(expires.getDate() + 7);
+
 	var body = {
 		iss: 'NEXT_NULL',
 		uuid: uuid,
 		board: boardId,
+		redis: 0,
+		mongo: 0,
 		exp: expires,
 		valid: expires % 1000 + uuid.substring(0,6)
 	};
 
-	console.log('creating Token of uuid : ' + uuid);
-	console.log('body:\n' + body.valid);
 	var token = jwt.encode(body, _secret);
-	console.log('token :' + token);
 
 	callback(token);
 };

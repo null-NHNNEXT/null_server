@@ -3,11 +3,12 @@
 var mongo = require('mongodb');
 var amqp = require('amqplib');
 var dbManager = require('../models/DBManager').mainDB;
+var readDb = require('../models/DBManager').readDB;
 var UserProvider = require('../models/userprovider.js').UserProvider;
 var PostProvider = require('../models/postprovider.js').PostProvider;
 
-var userProvider = new UserProvider(dbManager);
-var postProvider = new PostProvider(dbManager);
+var userProvider = new UserProvider(dbManager, readDb);
+var postProvider = new PostProvider(dbManager, readDb);
 
 function errorHandler(res, code, error) {
 	console.log("Error: " + error.message);

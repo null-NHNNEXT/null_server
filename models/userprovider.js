@@ -1,7 +1,8 @@
 "use strict";
 
-var UserProvider = function(dbManager) {
+var UserProvider = function(dbManager, readDb) {
 	this.dbManager = dbManager;
+	this.readDb = readDb || dbManager;
 }
 
 // --------------------------------
@@ -59,7 +60,7 @@ UserProvider.prototype.findById = function(boardId, writerId, callback) {
 	if (! boardId) return callback(new Error("boardId not specified"));
 	if (! writerId) return callback(new Error("writerId not specified"));
 
-	this.dbManager.getCollection("users"+boardId, function(error, collection) {
+	this.readDb.getCollection("users"+boardId, function(error, collection) {
 		if (error) return callback(error);
 		
 		collection.findOne({
